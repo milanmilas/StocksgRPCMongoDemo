@@ -1,4 +1,5 @@
-﻿using StocksWorkerService.Configurations;
+﻿using Microsoft.Extensions.Logging;
+using StocksWorkerService.Configurations;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -12,13 +13,14 @@ namespace StocksWorkerService.Services.Alphavantage
 {
     public class AlphavantageService : IAlphavantageService
     {
+        private readonly ILogger<AlphavantageService> logger;
         private readonly AlphavantageServiceConfiguration config;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public AlphavantageService(AlphavantageServiceConfiguration config, IHttpClientFactory httpClientFactory)
+        public AlphavantageService(ILogger<AlphavantageService> logger, AlphavantageServiceConfiguration config, IHttpClientFactory httpClientFactory)
         {
             if(!config.Symbols.Any()) throw new ArgumentNullException("config.Symbols", "At least one symbol must be specified.");
-
+            this.logger = logger;
             this.config = config;
             this.httpClientFactory = httpClientFactory;
         }
@@ -48,6 +50,9 @@ namespace StocksWorkerService.Services.Alphavantage
                     {
                         var content = await response.Content.ReadAsStringAsync();
                         result.Add(content);
+
+                        logger.LogError("some error");
+                        logger.LogWarning("some warn");
                     }
                     else
                     {
