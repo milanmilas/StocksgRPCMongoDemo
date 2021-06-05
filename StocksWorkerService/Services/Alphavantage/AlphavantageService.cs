@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using StocksWorkerService.Configurations;
+using StocksWorkerService.Model;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,50 +15,59 @@ namespace StocksWorkerService.Services.Alphavantage
     public class AlphavantageService : IAlphavantageService
     {
         private readonly ILogger<AlphavantageService> logger;
-        private readonly AlphavantageServiceConfiguration config;
+        private readonly WebApiConfiguration config;
+        private readonly IUrlBuilder urlBuilder;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public AlphavantageService(ILogger<AlphavantageService> logger, AlphavantageServiceConfiguration config, IHttpClientFactory httpClientFactory)
+        public AlphavantageService(ILogger<AlphavantageService> logger,
+                                   WebApiConfiguration config, 
+                                   IUrlBuilder urlBuilder, 
+                                   IHttpClientFactory httpClientFactory)
         {
-            if(!config.Symbols.Any()) throw new ArgumentNullException("config.Symbols", "At least one symbol must be specified.");
             this.logger = logger;
             this.config = config;
+            this.urlBuilder = urlBuilder;
             this.httpClientFactory = httpClientFactory;
         }
 
         public void Process()
         {
-            var urls = config.Symbols.Select(symbol => String.Format(config.Url, symbol, config.Interval, config.ApiKey)).ToList();
-
-            var res = GetStocks(urls).Result;
+            var res = GetStocks(urlBuilder.BuildSymbolsUrls()).Result;
         }
 
-        private async Task<ConcurrentBag<string>> GetStocks(List<string> urls)
+        private async Task<ConcurrentBag<Stock>> GetStocks(List<(string symbol, string url)> sybolsUrls)
         {
-            var result = new ConcurrentBag<string>();
+            logger.LogDebug($"Start getting Stocks.");
+
+            var result = new ConcurrentBag<Stock>();
             // Polly retry policy set up in Program.cs
             var client = httpClientFactory.CreateClient("retryclient");
             // throttle set per service, could be injected if multipl services need to share it
             var throttler = new SemaphoreSlim(initialCount: config.ParallelRequests);
 
-            IEnumerable<Task> tasks = urls.Select(async url =>
+            IEnumerable<Task> tasks = sybolsUrls.Select(async symbolUrl =>
             {
                 await throttler.WaitAsync();
                 try
                 {
-                    var response = await client.GetAsync(url);
+                    var response = await client.GetAsync(symbolUrl.url);
                     if (response.IsSuccessStatusCode)
                     {
                         var content = await response.Content.ReadAsStringAsync();
-                        result.Add(content);
-
-                        logger.LogError("some error");
-                        logger.LogWarning("some warn");
+                        result.Add(new Stock {
+                            DataSource = urlBuilder.DataSource,
+                            Symbol = symbolUrl.symbol,
+                            DateTime = DateTime.UtcNow,
+                            Data = content
+                        });
                     }
                     else
                     {
-
+                        logger.LogError($"An error occured while requesting symbol '{symbolUrl.symbol}' with url '{symbolUrl.url}' with response status code '{response.StatusCode}'");
                     }
+                }catch(Exception e)
+                {
+                    logger.LogError($"An exception has occured while getting stocks ulr: '{symbolUrl.url}' | message'{e.Message}'.", e);
                 }
                 finally
                 {
@@ -66,6 +76,7 @@ namespace StocksWorkerService.Services.Alphavantage
             });
             await Task.WhenAll(tasks);
 
+            logger.LogDebug($"End getting Stocks.");
             return result;
         }
     }

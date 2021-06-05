@@ -8,14 +8,12 @@ namespace StocksWorkerService.Model
 {
     public class Stock
     {
-        public decimal Open { get; set; }
+        public string DataSource { get; set; }
 
-        public decimal Close { get; set; }
+        public string Symbol { get; set; }
 
-        public decimal High { get; set; }
+        public DateTime DateTime { get; set; }
 
-        public decimal Low { get; set; }
-
-        public long Volume { get; set; }
+        public string Data { get; set; }
     }
 }

@@ -9,6 +9,7 @@ using Polly.Extensions.Http;
 using Polly.Timeout;
 using Polly;
 using NLog.Web;
+using StocksWorkerService.Services;
 
 namespace StocksWorkerService
 {
@@ -30,25 +31,30 @@ namespace StocksWorkerService
                 {
                     IConfiguration configuration = hostContext.Configuration;
 
+                    var webApiConfiguration = configuration
+                        .GetSection(nameof(WebApiConfiguration))
+                        .Get<WebApiConfiguration>();
+                    services.AddSingleton(webApiConfiguration);
+
                     var retryPolicy = HttpPolicyExtensions
                           .HandleTransientHttpError()
                           .Or<TimeoutRejectedException>()
-                          .RetryAsync(5);
+                          .RetryAsync(webApiConfiguration.RetryAttempts);
 
-                    var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(30);
+                    var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(webApiConfiguration.RequestTimeoutSeconds);
 
                     services.AddHttpClient("retryclient")
                         .AddPolicyHandler(retryPolicy)
                         .AddPolicyHandler(timeoutPolicy);
 
-                    services.AddHostedService<Worker>();
-
                     var alphavantageServiceConfiguration = configuration
-                        .GetSection(nameof(AlphavantageServiceConfiguration))
-                        .Get<AlphavantageServiceConfiguration>();
+                       .GetSection(nameof(AlphavantageServiceConfiguration))
+                       .Get<AlphavantageServiceConfiguration>();
                     services.AddSingleton(alphavantageServiceConfiguration);
+                    services.AddSingleton<IUrlBuilder, AlphaventageUrlBuilder>();
                     services.AddSingleton<IAlphavantageService, AlphavantageService>();
-                    
+
+                    services.AddHostedService<Worker>();
                 });
     }
 }

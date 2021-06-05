@@ -8,6 +8,7 @@ namespace StocksWorkerService.Configurations
 {
     public class AlphavantageServiceConfiguration
     {
+        public string DataSource { get; set; }
         public string Url { get; set; }
         public string[] Symbols { get; set; }
 
