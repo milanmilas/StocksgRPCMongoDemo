@@ -2,5 +2,6 @@
 {
     public interface IAlphavantageService
     {
+        public void Process();
     }
 }

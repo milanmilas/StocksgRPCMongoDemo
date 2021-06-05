@@ -24,6 +24,7 @@ namespace StocksWorkerService
         {
             while (!stoppingToken.IsCancellationRequested)
             {
+                service.Process();
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
                 await Task.Delay(10000, stoppingToken);
             }

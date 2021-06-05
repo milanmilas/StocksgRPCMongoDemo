@@ -14,5 +14,7 @@ namespace StocksWorkerService.Configurations
         public string Interval { get; set; }
 
         public string ApiKey { get; set; }
+
+        public int ParallelRequests { get; set; }
     }
 }
