@@ -12,21 +12,25 @@ namespace StocksWorkerService
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
-        private readonly IAlphavantageService service;
+        private readonly IEnumerable<IStocksService> services;
 
-        public Worker(ILogger<Worker> logger, IAlphavantageService service)
+        public Worker(ILogger<Worker> logger, IEnumerable<IStocksService> services)
         {
             _logger = logger;
-            this.service = service;
+            this.services = services;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                service.Process();
+                foreach (var service in services)
+                {
+                    await service.Process(stoppingToken);
+                }
+                
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                await Task.Delay(10000, stoppingToken);
+                await Task.Delay(100000, stoppingToken);
             }
         }
     }

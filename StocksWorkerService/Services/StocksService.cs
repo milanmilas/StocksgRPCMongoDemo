@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using StocksWorkerService.Configurations;
 using StocksWorkerService.Model;
+using StocksWorkerService.Utils;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -12,30 +13,33 @@ using System.Threading.Tasks;
 
 namespace StocksWorkerService.Services.Alphavantage
 {
-    public class AlphavantageService : IAlphavantageService
+    public class StocksService<T> : IStocksService
     {
-        private readonly ILogger<AlphavantageService> logger;
+        private readonly ILogger<StocksService<T>> logger;
         private readonly WebApiConfiguration config;
-        private readonly IUrlBuilder urlBuilder;
+        private readonly IUrlBuilder<T> urlBuilder;
         private readonly IHttpClientFactory httpClientFactory;
+        private readonly IDateTime dateTime;
 
-        public AlphavantageService(ILogger<AlphavantageService> logger,
-                                   WebApiConfiguration config, 
-                                   IUrlBuilder urlBuilder, 
-                                   IHttpClientFactory httpClientFactory)
+        public StocksService(ILogger<StocksService<T>> logger,
+                                WebApiConfiguration config, 
+                                IUrlBuilder<T> urlBuilder,
+                                IHttpClientFactory httpClientFactory,
+                                IDateTime dateTime)
         {
             this.logger = logger;
             this.config = config;
             this.urlBuilder = urlBuilder;
             this.httpClientFactory = httpClientFactory;
+            this.dateTime = dateTime;
         }
 
-        public void Process()
+        public async Task<ConcurrentBag<Stock>> Process(CancellationToken stoppingToken = default)
         {
-            var res = GetStocks(urlBuilder.BuildSymbolsUrls()).Result;
+            return await GetStocks(urlBuilder.BuildSymbolsUrls(), stoppingToken);
         }
 
-        private async Task<ConcurrentBag<Stock>> GetStocks(List<(string symbol, string url)> sybolsUrls)
+        private async Task<ConcurrentBag<Stock>> GetStocks(List<(string symbol, string url)> sybolsUrls, CancellationToken stoppingToken)
         {
             logger.LogDebug($"Start getting Stocks.");
 
@@ -47,17 +51,20 @@ namespace StocksWorkerService.Services.Alphavantage
 
             IEnumerable<Task> tasks = sybolsUrls.Select(async symbolUrl =>
             {
-                await throttler.WaitAsync();
                 try
                 {
+                    await throttler.WaitAsync();
+                    if (stoppingToken.IsCancellationRequested) return;
+
                     var response = await client.GetAsync(symbolUrl.url);
+                    if (stoppingToken.IsCancellationRequested) return;
                     if (response.IsSuccessStatusCode)
                     {
                         var content = await response.Content.ReadAsStringAsync();
                         result.Add(new Stock {
                             DataSource = urlBuilder.DataSource,
                             Symbol = symbolUrl.symbol,
-                            DateTime = DateTime.UtcNow,
+                            DateTime = dateTime.UtcNow(),
                             Data = content
                         });
                     }
@@ -74,8 +81,8 @@ namespace StocksWorkerService.Services.Alphavantage
                     throttler.Release();
                 }
             });
-            await Task.WhenAll(tasks);
 
+            await Task.WhenAny(Task.WhenAll(tasks), stoppingToken.AsTask());
             logger.LogDebug($"End getting Stocks.");
             return result;
         }

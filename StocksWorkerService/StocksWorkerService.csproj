@@ -14,8 +14,4 @@
     <PackageReference Include="Polly" Version="7.2.2" />
     <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Services\Iex\" />
-  </ItemGroup>
 </Project>

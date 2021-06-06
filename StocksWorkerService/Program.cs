@@ -10,6 +10,7 @@ using Polly.Timeout;
 using Polly;
 using NLog.Web;
 using StocksWorkerService.Services;
+using StocksWorkerService.Utils;
 
 namespace StocksWorkerService
 {
@@ -39,6 +40,7 @@ namespace StocksWorkerService
                     var retryPolicy = HttpPolicyExtensions
                           .HandleTransientHttpError()
                           .Or<TimeoutRejectedException>()
+                          .OrResult(r => r.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
                           .RetryAsync(webApiConfiguration.RetryAttempts);
 
                     var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(webApiConfiguration.RequestTimeoutSeconds);
@@ -47,12 +49,17 @@ namespace StocksWorkerService
                         .AddPolicyHandler(retryPolicy)
                         .AddPolicyHandler(timeoutPolicy);
 
-                    var alphavantageServiceConfiguration = configuration
-                       .GetSection(nameof(AlphavantageServiceConfiguration))
-                       .Get<AlphavantageServiceConfiguration>();
+                    var alphavantageServiceConfiguration = configuration.RegisterConfiguration<AlphavantageServiceConfiguration>();
                     services.AddSingleton(alphavantageServiceConfiguration);
-                    services.AddSingleton<IUrlBuilder, AlphaventageUrlBuilder>();
-                    services.AddSingleton<IAlphavantageService, AlphavantageService>();
+                    services.AddSingleton<IUrlBuilder<AlphavantageServiceConfiguration>, AlphaventageUrlBuilder>();
+                    services.AddTransient<IStocksService, StocksService<AlphavantageServiceConfiguration>>();
+
+                    var iexServiceConfiguration = configuration.RegisterConfiguration<IexServiceConfiguration>();
+                    services.AddSingleton(iexServiceConfiguration);
+                    services.AddSingleton<IUrlBuilder<IexServiceConfiguration>, IexUrlBuilder>();
+                    services.AddTransient<IStocksService, StocksService<IexServiceConfiguration>>();
+
+                    services.AddSingleton<IDateTime, DateTimeWrapper>();
 
                     services.AddHostedService<Worker>();
                 });

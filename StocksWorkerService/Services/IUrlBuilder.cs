@@ -2,7 +2,7 @@
 
 namespace StocksWorkerService.Services
 {
-    public interface IUrlBuilder
+    public interface IUrlBuilder<T>
     {
         public string DataSource { get; }
         List<(string symbol, string url)> BuildSymbolsUrls();

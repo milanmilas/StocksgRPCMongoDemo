@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace StocksWorkerService.Services.Alphavantage
 {
-    public class AlphaventageUrlBuilder : IUrlBuilder<AlphavantageServiceConfiguration>
+    public class IexUrlBuilder : IUrlBuilder<IexServiceConfiguration>
     {
-        private readonly AlphavantageServiceConfiguration config;
+        private readonly IexServiceConfiguration config;
 
-        public AlphaventageUrlBuilder(AlphavantageServiceConfiguration config)
+        public IexUrlBuilder(IexServiceConfiguration config)
         {
             if (!config.Symbols.Any()) throw new ArgumentNullException("config.Symbols", "At least one symbol must be specified.");
 
@@ -22,7 +22,7 @@ namespace StocksWorkerService.Services.Alphavantage
 
         public List<(string symbol, string url)> BuildSymbolsUrls()
         {
-            var urls = config.Symbols.Select(symbol => (symbol, String.Format(config.Url, symbol, config.Interval, config.ApiKey))).ToList();
+            var urls = config.Symbols.Select(symbol => (symbol, String.Format(config.Url, symbol, config.Token))).ToList();
             return urls;
         }
     }
