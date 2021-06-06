@@ -34,7 +34,7 @@ namespace StocksWorkerService.Services.Alphavantage
             this.dateTime = dateTime;
         }
 
-        public async Task<ConcurrentBag<Stock>> Process(CancellationToken stoppingToken = default)
+        public async Task<ConcurrentBag<Stock>> GetStocks(CancellationToken stoppingToken = default)
         {
             return await GetStocks(urlBuilder.BuildSymbolsUrls(), stoppingToken);
         }

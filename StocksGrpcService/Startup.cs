@@ -32,6 +32,7 @@ namespace StocksGrpcService
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapGrpcService<GreeterService>();
+                endpoints.MapGrpcService<StocksTimeSeriesService>();
 
                 endpoints.MapGet("/", async context =>
                 {

@@ -7,6 +7,6 @@ namespace StocksWorkerService.Services.Alphavantage
 {
     public interface IStocksService
     {
-        Task<ConcurrentBag<Stock>> Process(CancellationToken stoppingToken);
+        Task<ConcurrentBag<Stock>> GetStocks(CancellationToken stoppingToken);
     }
 }

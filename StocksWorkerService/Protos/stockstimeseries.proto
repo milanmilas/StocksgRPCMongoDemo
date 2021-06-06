@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+import "google/protobuf/Timestamp.proto";
+
+option csharp_namespace = "StocksGrpcService";
+
+package StocksTimeSeriesPackage;
+
+// The greeting service definition.
+service Greeter {
+  // Sends a greeting
+  rpc SayHello (HelloRequest) returns (HelloReply);
+}
+
+service StocksTimeSeries {
+  rpc Create (StocksTimeSeriesCreateRequest) returns (StocksTimeSeriesCreateReply);
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings.
+message HelloReply {
+  string message = 1;
+}
+
+message StocksTimeSeriesCreateRequest {
+    repeated StocksTimeSeriesRecord stocksTimeSeries = 1;
+}
+
+enum StatusCode {
+    OK = 0;
+    Error = 1;
+}
+
+message StocksTimeSeriesCreateReply {
+    StatusCode Status = 1;
+    string message = 2;
+    string exception = 3;
+}
+
+message StocksTimeSeriesRecord {
+  string datasource = 1;
+  string symbol = 2;
+  google.protobuf.Timestamp dateTime = 3;
+  string data = 4;
+  google.protobuf.Timestamp Timestamp = 5;
+}
