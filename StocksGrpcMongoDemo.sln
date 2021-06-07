@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StocksWorkerService.Test", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StocksGrpcService.Test", "StocksGrpcService.Test\StocksGrpcService.Test.csproj", "{C5B9F2C7-E3A9-4D82-87F2-03644E694064}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StocksCommon", "StocksCommon\StocksCommon.csproj", "{0BB44186-DCFC-4E4C-A647-B9585DF3C697}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StocksCommon", "StocksCommon\StocksCommon.csproj", "{0BB44186-DCFC-4E4C-A647-B9585DF3C697}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gRPCSimpleTestClient", "gRPCSimpleTestClient\gRPCSimpleTestClient.csproj", "{30F5F413-1B81-41CE-BAA8-C88B4E09F67D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{0BB44186-DCFC-4E4C-A647-B9585DF3C697}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0BB44186-DCFC-4E4C-A647-B9585DF3C697}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0BB44186-DCFC-4E4C-A647-B9585DF3C697}.Release|Any CPU.Build.0 = Release|Any CPU
+		{30F5F413-1B81-41CE-BAA8-C88B4E09F67D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30F5F413-1B81-41CE-BAA8-C88B4E09F67D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30F5F413-1B81-41CE-BAA8-C88B4E09F67D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30F5F413-1B81-41CE-BAA8-C88B4E09F67D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

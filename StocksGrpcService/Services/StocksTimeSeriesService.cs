@@ -1,3 +1,4 @@
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using StocksGrpcService.DataAccess;
@@ -49,6 +50,42 @@ namespace StocksGrpcService
                     Message = e.Message
                 };
             }
+        }
+
+        public override async Task Get(StocksTimeSeriesGetRequest request, IServerStreamWriter<StocksTimeSeriesRecord> responseStream, ServerCallContext context)
+        {
+            try
+            {
+                // can be refactored with Query and QueryHandler
+                var dateTimeFrom = request.DateTimeFrom?.ToDateTime();
+                var dateTimeTo = request.DateTimeTo?.ToDateTime();
+
+                var result = _repository.Get((x) =>
+                    x.Symbol == request.Symbol &&
+                    (!request.Datasources.Any() || request.Datasources.Contains(x.DataSource)) &&
+                    (request.DateTimeFrom == null || dateTimeFrom <= x.DateTime) &&
+                    (request.DateTimeTo == null || x.DateTime <= dateTimeTo)
+                    );
+
+                foreach (var item in result)
+                {
+                    // additional Converter needed
+                    var record = new StocksTimeSeriesRecord();
+
+                    record.Datasource = item.DataSource;
+                    record.Symbol = item.Symbol;
+                    record.DateTime = Timestamp.FromDateTime(item.DateTime);
+                    record.Data = item.Data;
+
+                    await responseStream.WriteAsync(record);
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An error occured while getting StockTimeSeries data.");
+                throw;
+            }
+            
         }
     }
 }
