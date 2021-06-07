@@ -24,31 +24,47 @@ namespace StocksWorkerService.Schedulers
         }
         public void Start(CancellationToken cancellationToken)
         {
-            var schedFact = new StdSchedulerFactory();
-            _scheduler = schedFact.GetScheduler().Result;
-            _scheduler.Start();
+            try
+            {
+                var schedFact = new StdSchedulerFactory();
+                _scheduler = schedFact.GetScheduler().Result;
+                _scheduler.Start();
 
-            Func<CancellationToken, Task> func = _feeder.Proccess;
+                Func<CancellationToken, Task> func = _feeder.Proccess;
 
-            IJobDetail job = JobBuilder.Create<FeederJob<T>>()
-                .SetJobData(new JobDataMap
-                {
+                IJobDetail job = JobBuilder.Create<FeederJob>()
+                    .SetJobData(new JobDataMap
+                    {
                     {"func", func },
                     {"token", cancellationToken }
-                })
-                .WithIdentity(typeof(T).Name)
-                .Build();
+                    })
+                    .WithIdentity(typeof(T).Name)
+                    .Build();
 
-            ITrigger trigger = TriggerBuilder.Create()
-                .WithCronSchedule("0 0/1 * * * ?")
-                .ForJob(job)
-                .Build();
+                ITrigger trigger = TriggerBuilder.Create()
+                    .WithCronSchedule(_config.Schedule)
+                    .ForJob(job)
+                    .Build();
 
-            _scheduler.ScheduleJob(job, trigger);
+                _logger.LogInformation($"Scheduling job '{typeof(T).Name}' with schedule '{_config.Schedule}'.");
+                _scheduler.ScheduleJob(job, trigger);
+            }
+            catch (Exception e )
+            {
+                _logger.LogError(e, $"An error has occured scheduling job '{typeof(T).Name}' with message '{e.Message}'.");
+            }
+            
         }
         public void Stop()
         {
-            _scheduler?.Start();
+            try
+            {
+                _scheduler?.Shutdown();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, $"An error has occured stopping sheduler '{typeof(T).Name}' with message '{e.Message}'.");
+            }            
         }
     }
 }

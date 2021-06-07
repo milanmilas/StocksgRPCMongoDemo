@@ -34,7 +34,7 @@ namespace StocksWorkerService.Services
                 ConcurrentBag<Stock> stocks = await _stocksService.GetStocks(stoppingToken);
                 if (stocks == null || stocks.Count == 0)
                 {
-                    _logger.LogWarning("No Stocks datareturned from stocks service.");
+                    _logger.LogWarning("No Stocks data returned from stocks service.");
                     return;
                 }
 
@@ -50,7 +50,7 @@ namespace StocksWorkerService.Services
             }
             catch (System.Exception e)
             {
-                _logger.LogError($"An Error occured while running Stocks Feeder '{e.Message}'.", e);
+                _logger.LogError(e, $"An Error occured while running Stocks Feeder '{e.Message}'.");
             }
         }
     }

@@ -26,6 +26,8 @@ namespace StocksWorkerService.Converters
                 record.DateTime = Timestamp.FromDateTime(item.DateTime);
                 record.Data = item.Data;
                 record.Timestamp = Timestamp.FromDateTime(_dateTime.UtcNow());
+
+                result.Add(record);
             }
 
             return result;

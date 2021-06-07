@@ -30,7 +30,7 @@ namespace StocksGrpcService
             try
             {
 
-                var stockTimeSeries = _converter.Convert(request.StocksTimeSeries.ToList());
+                var stockTimeSeries = _converter.Convert(request.StocksTimeSeries);
                 await _repository.InsertManyAsync(stockTimeSeries);
 
                 return new StocksTimeSeriesCreateReply

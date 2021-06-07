@@ -73,9 +73,14 @@ namespace StocksWorkerService.Services.Alphavantage
                     {
                         logger.LogError($"An error occured while requesting symbol '{symbolUrl.symbol}' with url '{symbolUrl.url}' with response status code '{response.StatusCode}'");
                     }
-                }catch(Exception e)
+                }
+                catch(OperationCanceledException oe)
                 {
-                    logger.LogError($"An exception has occured while getting stocks ulr: '{symbolUrl.url}' | message'{e.Message}'.", e);
+                    logger.LogWarning("Operation has been cancelled by stoppingToken.");
+                }
+                catch(Exception e)
+                {
+                    logger.LogError(e, $"An exception has occured while getting stocks ulr: '{symbolUrl.url}' | message'{e.Message}'.");
                 }
                 finally
                 {

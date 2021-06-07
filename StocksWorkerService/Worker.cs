@@ -31,13 +31,8 @@ namespace StocksWorkerService
                 scheduler.Start(stoppingToken);
             }
 
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                
-
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                await Task.Delay(100000, stoppingToken);
-            }
+            // wait cancellation
+            await Task.Delay(-1, stoppingToken);
 
             foreach (var scheduler in _schedulers)
             {
