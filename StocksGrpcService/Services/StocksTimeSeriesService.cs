@@ -52,11 +52,12 @@ namespace StocksGrpcService
             }
         }
 
+        // implemented as a stream instead of standard Request Response
         public override async Task Get(StocksTimeSeriesGetRequest request, IServerStreamWriter<StocksTimeSeriesRecord> responseStream, ServerCallContext context)
         {
             try
             {
-                // can be refactored with Query and QueryHandler
+                // can be refactored with Query and QueryHandler, it should not be part of this service
                 var dateTimeFrom = request.DateTimeFrom?.ToDateTime();
                 var dateTimeTo = request.DateTimeTo?.ToDateTime();
 
