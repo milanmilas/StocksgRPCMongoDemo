@@ -1,5 +1,6 @@
 ﻿using System;
 using StocksGrpcService.DataAccess;
+using StocksGrpcService.DataAccess.Attributes;
 
 namespace StocksGrpcService.DataAccess.Models
 {

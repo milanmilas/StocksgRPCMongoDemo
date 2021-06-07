@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace StocksWorkerService.Configurations
 {
-    public class IexServiceConfiguration
+    public class IexServiceConfiguration : SchedulerConfiguration
     {
         public string DataSource { get; set; }
         public string Url { get; set; }

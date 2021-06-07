@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace StocksWorkerService.Services.Alphavantage
 {
-    public interface IStocksService
+    public interface IStocksService<T>
     {
         Task<ConcurrentBag<Stock>> GetStocks(CancellationToken stoppingToken);
     }

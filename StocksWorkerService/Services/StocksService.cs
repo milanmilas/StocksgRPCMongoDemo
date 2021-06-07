@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace StocksWorkerService.Services.Alphavantage
 {
-    public class StocksService<T> : IStocksService
+    public class StocksService<T> : IStocksService<T>
     {
         private readonly ILogger<StocksService<T>> logger;
         private readonly WebApiConfiguration config;
@@ -53,14 +53,15 @@ namespace StocksWorkerService.Services.Alphavantage
             {
                 try
                 {
-                    await throttler.WaitAsync();
                     if (stoppingToken.IsCancellationRequested) return;
 
-                    var response = await client.GetAsync(symbolUrl.url);
-                    if (stoppingToken.IsCancellationRequested) return;
+                    await throttler.WaitAsync(stoppingToken);
+
+                    var response = await client.GetAsync(symbolUrl.url, stoppingToken);
+                    
                     if (response.IsSuccessStatusCode)
                     {
-                        var content = await response.Content.ReadAsStringAsync();
+                        var content = await response.Content.ReadAsStringAsync(stoppingToken);
                         result.Add(new Stock {
                             DataSource = urlBuilder.DataSource,
                             Symbol = symbolUrl.symbol,

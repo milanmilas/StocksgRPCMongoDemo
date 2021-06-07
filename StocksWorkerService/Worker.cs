@@ -2,6 +2,7 @@ using Grpc.Net.Client;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using StocksGrpcService;
+using StocksWorkerService.Schedulers;
 using StocksWorkerService.Services.Alphavantage;
 using System;
 using System.Collections.Generic;
@@ -14,47 +15,38 @@ namespace StocksWorkerService
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
-        private readonly IEnumerable<IStocksService> services;
+        private readonly IEnumerable<IScheduler> _schedulers;
 
-        public Worker(ILogger<Worker> logger, IEnumerable<IStocksService> services)
+        public Worker(ILogger<Worker> logger, IEnumerable<Schedulers.IScheduler> schedulers)
         {
             _logger = logger;
-            this.services = services;
+            _schedulers = schedulers;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            foreach (var scheduler in _schedulers)
+            {
+                _logger.LogInformation($"Worker stopping scheduler '{scheduler.GetType().Name}'");
+                scheduler.Start(stoppingToken);
+            }
+
             while (!stoppingToken.IsCancellationRequested)
             {
-                var input = new HelloRequest { Name = "Tim" };
-                var channel = GrpcChannel.ForAddress("https://localhost:5001");
-                var client = new Greeter.GreeterClient(channel);
-
-                var reply = await client.SayHelloAsync(input);
-                _logger.LogInformation(reply.Message);
-
-                var client2 = new StocksTimeSeries.StocksTimeSeriesClient(channel);
-
-                var request2 = new StocksTimeSeriesCreateRequest();
-                request2.StocksTimeSeries.Add(new StocksTimeSeriesRecord { Symbol = "MM", DateTime = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(DateTime.UtcNow) });
-
-                var reply2 = await client2.CreateAsync(request2);
-                var reply3 = await client2.CreateAsync(request2);
-                _logger.LogInformation(reply2.Status.ToString());
-
-                //foreach (var service in services)
-                //{
-                //    await service.GetStocks(stoppingToken);
-                //}
+                
 
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
                 await Task.Delay(100000, stoppingToken);
             }
-        }
 
-        public void Run()
-        {
+            foreach (var scheduler in _schedulers)
+            {
+                _logger.LogInformation($"Worker stopping scheduler {scheduler.GetType().Name}");
+                scheduler.Stop();
+            }
 
+            _logger.LogInformation("Worker waiting 10 to stop service: {time}", DateTimeOffset.Now);
+            await Task.Delay(10000, stoppingToken);
         }
     }
 }

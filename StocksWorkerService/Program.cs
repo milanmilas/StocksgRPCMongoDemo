@@ -11,6 +11,10 @@ using Polly;
 using NLog.Web;
 using StocksWorkerService.Services;
 using StocksWorkerService.Utils;
+using StocksGrpcService;
+using StocksWorkerService.Model;
+using StocksWorkerService.Converters;
+using StocksWorkerService.Schedulers;
 
 namespace StocksWorkerService
 {
@@ -49,17 +53,28 @@ namespace StocksWorkerService
                         .AddPolicyHandler(retryPolicy)
                         .AddPolicyHandler(timeoutPolicy);
 
+                    var stocksTimeSeriesClientConfiguration = configuration.RegisterConfiguration<StocksTimeSeriesClientConfiguration>();
+                    services.AddSingleton(stocksTimeSeriesClientConfiguration);
+                    services.AddSingleton<IDateTime, DateTimeWrapper>();
+                    services.AddTransient<IStocksTimeSeriesClientWrapper, StocksTimeSeriesClientWrapper>();
+                    services.AddSingleton<IConverter<Stock, StocksTimeSeriesRecord>, StocksToStocksTimeSeriesRecordConverter>();
+                        
+
                     var alphavantageServiceConfiguration = configuration.RegisterConfiguration<AlphavantageServiceConfiguration>();
                     services.AddSingleton(alphavantageServiceConfiguration);
                     services.AddSingleton<IUrlBuilder<AlphavantageServiceConfiguration>, AlphaventageUrlBuilder>();
-                    services.AddTransient<IStocksService, StocksService<AlphavantageServiceConfiguration>>();
+                    services.AddTransient<IStocksService<AlphavantageServiceConfiguration>, StocksService<AlphavantageServiceConfiguration>>();
+
+                    services.AddTransient<IStocksFeeder<AlphavantageServiceConfiguration>, StocksFeeder<AlphavantageServiceConfiguration>>();
+                    services.AddTransient<IScheduler, Scheduler<AlphavantageServiceConfiguration>>();
 
                     var iexServiceConfiguration = configuration.RegisterConfiguration<IexServiceConfiguration>();
                     services.AddSingleton(iexServiceConfiguration);
                     services.AddSingleton<IUrlBuilder<IexServiceConfiguration>, IexUrlBuilder>();
-                    services.AddTransient<IStocksService, StocksService<IexServiceConfiguration>>();
+                    services.AddTransient<IStocksService<IexServiceConfiguration>, StocksService<IexServiceConfiguration>>();
 
-                    services.AddSingleton<IDateTime, DateTimeWrapper>();
+                    services.AddTransient<IStocksFeeder<IexServiceConfiguration>, StocksFeeder<IexServiceConfiguration>>();
+                    services.AddTransient<IScheduler, Scheduler<IexServiceConfiguration>>();
 
                     services.AddHostedService<Worker>();
                 });

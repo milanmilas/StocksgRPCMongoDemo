@@ -3,21 +3,25 @@ using Microsoft.Extensions.Logging;
 using StocksGrpcService.DataAccess;
 using StocksGrpcService.DataAccess.Models;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace StocksGrpcService
 {
+
     public class StocksTimeSeriesService : StocksTimeSeries.StocksTimeSeriesBase
     {
         private readonly ILogger<GreeterService> _logger;
         private readonly IMongoRepository<StockTimeSeries> _repository;
+        private readonly IConverter<StocksTimeSeriesRecord, StockTimeSeries> _converter;
 
-        public StocksTimeSeriesService(ILogger<GreeterService> logger, IMongoRepository<StockTimeSeries> repository)
+        public StocksTimeSeriesService(ILogger<GreeterService> logger,
+            IMongoRepository<StockTimeSeries> repository,
+            IConverter<StocksTimeSeriesRecord, StockTimeSeries> converter)
         {
             _logger = logger;
             _repository = repository;
+            _converter = converter;
         }
 
         public override async Task<StocksTimeSeriesCreateReply> Create(StocksTimeSeriesCreateRequest request, ServerCallContext context)
@@ -25,21 +29,9 @@ namespace StocksGrpcService
             _logger.LogInformation("Received Create Stocks Time Series.");
             try
             {
-                var stocksTimeSeriesRecords = request.StocksTimeSeries.ToList();
 
-                List<StockTimeSeries> stocksTimeSeries = new List<StockTimeSeries>();
-                foreach (var record in stocksTimeSeriesRecords)
-                {
-                    var stockTimeSeries = new StockTimeSeries();
-                    stockTimeSeries.DataSource = record.Datasource;
-                    stockTimeSeries.Symbol = record.Symbol;
-                    stockTimeSeries.DateTime = record.DateTime.ToDateTime();
-                    stockTimeSeries.Data = record.Data;
-
-                    stocksTimeSeries.Add(stockTimeSeries);
-                }
-
-                await _repository.InsertManyAsync(stocksTimeSeries);
+                var stockTimeSeries = _converter.Convert(request.StocksTimeSeries.ToList());
+                await _repository.InsertManyAsync(stockTimeSeries);
 
                 return new StocksTimeSeriesCreateReply
                 {
