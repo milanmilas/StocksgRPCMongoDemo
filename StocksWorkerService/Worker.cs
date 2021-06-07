@@ -36,9 +36,10 @@ namespace StocksWorkerService
                 var client2 = new StocksTimeSeries.StocksTimeSeriesClient(channel);
 
                 var request2 = new StocksTimeSeriesCreateRequest();
-                request2.StocksTimeSeries.Add(new StocksTimeSeriesRecord { Symbol = "MM" });
+                request2.StocksTimeSeries.Add(new StocksTimeSeriesRecord { Symbol = "MM", DateTime = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(DateTime.UtcNow) });
 
                 var reply2 = await client2.CreateAsync(request2);
+                var reply3 = await client2.CreateAsync(request2);
                 _logger.LogInformation(reply2.Status.ToString());
 
                 //foreach (var service in services)

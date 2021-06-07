@@ -1,5 +1,10 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using StocksGrpcService.Configurations;
+using StocksGrpcService.DataAccess;
+using StocksGrpcService.DataAccess.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,6 +27,18 @@ namespace StocksGrpcService
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                }).ConfigureServices((hostContext, services) =>
+                {
+                    IConfiguration configuration = hostContext.Configuration;
+
+                    var databaseConfiguration = configuration
+                        .GetSection(nameof(DatabaseConfiguration))
+                        .Get<DatabaseConfiguration>();
+                    services.AddSingleton(databaseConfiguration);
+
+                    services.AddSingleton<IMongoDBContext<StockTimeSeries>, MongoDBContext<StockTimeSeries>>();
+                    // MongoClient is thread safe, meke it transient if any issues arrise
+                    services.AddSingleton<IMongoRepository<StockTimeSeries>, MongoRepository<StockTimeSeries>>();
                 });
     }
 }
